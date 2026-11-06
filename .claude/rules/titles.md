@@ -1,6 +1,6 @@
 # Titles
 
-The owner's rule for every project of theirs (Languer Map, linguasim, phrase-marker-gen, Corpus Hub and any later one).
+The owner's rule for every project of theirs (Languer, linguasim, phrase-marker-gen, Corpus Centre and any later one).
 
 - End every page title with ` by yoshi`: one space, then `by yoshi` in lowercase, as the last words. Example: `Language families · Languer by yoshi`.
 - "Page title" means the HTML `<title>` and any title set by a script (`document.title`). Add it once, at the end of the whole title, not after each part.
