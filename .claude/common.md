@@ -8,3 +8,4 @@ Rules for every repository of the owner, from the `research-aide` repository. A 
 @rules/english-first.md
 @rules/publishing.md
 @rules/titles.md
+@rules/profile-links.md
