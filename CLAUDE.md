@@ -24,3 +24,4 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 - `english-first.md`: which language each part of a repository is written in.
 - `publishing.md`: what may be published.
 - `titles.md`: the ` by yoshi` suffix on page titles.
+- `profile-links.md`: the `?ref=` parameter on links to the personal site.
