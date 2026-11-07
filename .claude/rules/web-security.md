@@ -14,7 +14,7 @@ The owner's rules for every website, under `security-first.md`: no injection, ev
 
 Written once in the site's template or build tool, right after `<meta charset="utf-8">` (a `<meta>` policy covers only what comes after it), and checked on every page in CI. The repository's rule file names where.
 
-- `<meta http-equiv="Content-Security-Policy">` with at least: `default-src 'none'`; `script-src`, `style-src`, `img-src` and `connect-src` listing only `'self'` and the services the site really uses (the measurement service the owner chose, an API a page calls); no `'unsafe-inline'`, `'unsafe-eval'`, `data:` or wildcard unless the rule file says why; `form-action 'none'` (or `'self'` with a search form); `base-uri 'none'`; `object-src 'none'`; `upgrade-insecure-requests`. A new source changes the policy in the same pull request.
+- `<meta http-equiv="Content-Security-Policy">` with at least: `default-src 'none'`; `script-src`, `style-src`, `img-src` and `connect-src` listing only `'self'` and the services the site really uses (the measurement service the owner chose, an API a page calls); no `'unsafe-inline'`, `'unsafe-eval'`, `data:` or wildcard unless the rule file says why; `form-action 'none'` (or `'self'` with a search form); `base-uri 'none'`; `object-src 'none'`. Leave out `upgrade-insecure-requests`: with no `http:` source allowed it adds nothing, and WebKit applies it to `http://127.0.0.1`, which breaks the shared browser check. A new source changes the policy in the same pull request.
 - `<meta name="referrer" content="no-referrer">`, or `strict-origin-when-cross-origin` where the measurement the owner chose needs it.
 - Do not put `frame-ancestors`, `report-uri`, `report-to` or `sandbox` in the `<meta>` policy: browsers ignore them there.
 
