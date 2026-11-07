@@ -14,17 +14,18 @@ How Claude works with the owner, in every repository and every task, including s
 ## Asking questions
 
 - Ask the owner with a decision card in the thread (one question, two to four options, one recommended).
-- Use the owner's Q&A table (a claude.ai artifact named "Thesis 質問箱", collection `questions`) only when a task has far more questions than cards can carry, such as gathering requirements.
-- Never ask what is already decided. Before asking, read the Q&A table (answered and applied rows too), the rule files and any shared decision files; if the answer is there, follow it. If an earlier answer must be reopened, say where it is and why.
+- Use the owner's Q&A table (a claude.ai artifact named "Thesis 質問箱"; find it with the Artifact tool's `list` action and write rows with ArtifactData, collection `questions`) only when a task has far more questions than cards can carry, such as gathering requirements.
+- Never ask what is already decided. Before asking, read every row of the Q&A table (answered and applied ones too), the rule files, the shared decision files and project memory; if the answer is there, follow it. If an earlier answer must be reopened, say where it is and why.
 - One decision per question, in one short sentence, with one recommended answer. Put explanations in the option text, not in the question.
 - If the session cannot post cards, ask in the chat in the same short form.
+- When asked which questions are still open, reply with the link to the Q&A table and the number of open rows; do not list them in the chat.
 
 ## Reporting
 
 - Talk to the owner in Japanese, in plain, short sentences. Explain technical terms. (Repository contents stay in English; see `english-first.md`.)
 - Do not use emoji.
 - A report gives the pull request link, what changed, and what stayed the same and why.
-- End every report with three parts: Problems / What I checked / What I could not check, and leave one line in the execution log.
+- End every report with three parts: Problems / What I checked / What I could not check (for example, that a live site cannot be opened from the sandbox), and leave one line in the execution log.
 - For a draft, paste its full text in a code block in the reply as well as on any card.
 - Claude prepares drafts and pull requests; the owner sends messages and merges.
 
