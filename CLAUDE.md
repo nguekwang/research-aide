@@ -4,6 +4,7 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 
 ## Principles
 
+- **Security first.** When security and anything else pull apart, security wins; every protection the platform allows is on by default.
 - **One rule, one place.** A rule that applies to more than one repository lives here, not in each repository. A repository keeps only its own rules.
 - **The owner decides and reviews.** Every change, here too, goes through a pull request that the owner merges.
 - **Nothing private.** These files are read in public repositories' sessions; write rules, never private facts.
@@ -20,6 +21,7 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 
 - `instruction-files.md`: how CLAUDE.md and rule files are organized.
 - `working-with-the-owner.md`: starting a task, asking questions, reporting.
+- `security-first.md`: security comes first in every repository; secrets, Actions permissions, dependencies.
 - `git-and-prs.md`: branches, conflicts, checks, pull requests.
 - `english-first.md`: which language each part of a repository is written in.
 - `publishing.md`: what may be published.
@@ -28,4 +30,4 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 - `pr-previews.md`: a preview of the site on every pull request in website repositories (shared workflow `.github/workflows/pages-with-previews.yml`).
 - `languages.md`: every language shows the same thing; notation follows each language's official documents.
 - `web-browsers.md`: websites work in Chromium, Firefox and WebKit (Safari) on phones and computers (shared workflow `.github/workflows/browser-check.yml`).
-- `web-security.md`: escaping, scripts, Content-Security-Policy, no forms that send visitor data.
+- `web-security.md`: escaping, no inline scripts or styles, the policies every page carries, the headers to send where the host allows, no forms that send visitor data.
