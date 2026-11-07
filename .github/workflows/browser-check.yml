@@ -1,0 +1,73 @@
+# Shared workflow for website repositories: build the site and open the listed pages in
+# Chromium, Firefox and WebKit (Safari) at desktop and phone width, in light and dark mode.
+# Fails on sideways scrolling, JavaScript or console errors and missing files.
+# Screenshots (the three engines side by side) are uploaded as an artifact.
+# Rules and the setup for a new repository: .claude/rules/web-browsers.md.
+name: browser-check
+on:
+  workflow_call:
+    inputs:
+      build:
+        description: Shell commands that build the site.
+        type: string
+        required: true
+      site-dir:
+        description: Directory the build writes the site into.
+        type: string
+        default: _site
+      pages:
+        description: Pages to open, one path under the site root per line, such as "/" for the top page or "/about/".
+        type: string
+        required: true
+      locales:
+        description: Browser languages to open each page in, separated by spaces (for sites that pick the interface language from the browser).
+        type: string
+        default: en-US
+      python-version:
+        type: string
+        default: "3.12"
+      research-aide-ref:
+        description: Version of research-aide whose tools/browser_check.py runs; keep it the same as the ref after @ in "uses".
+        type: string
+        default: main
+permissions:
+  contents: read
+jobs:
+  browsers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: nguekwang/research-aide
+          ref: ${{ inputs.research-aide-ref }}
+          path: .research-aide
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Build the site
+        run: ${{ inputs.build }}
+      - name: Install Chromium, Firefox, WebKit and fonts for many scripts
+        run: |
+          pip install playwright pillow
+          python3 -m playwright install --with-deps chromium firefox webkit
+          sudo apt-get install -y --no-install-recommends fonts-noto-core fonts-noto-cjk
+      - name: Open every listed page in every engine
+        env:
+          PAGES: ${{ inputs.pages }}
+          SITE_DIR: ${{ inputs.site-dir }}
+          LOCALES: ${{ inputs.locales }}
+        run: |
+          mapfile -t pages < <(printf '%s\n' "$PAGES" | grep -v '^[[:space:]]*$' | sed 's#^[[:space:]]*/\{0,1\}##; s#[[:space:]]*$##')
+          python3 .research-aide/tools/browser_check.py --site "$SITE_DIR" --out browser-check --pages "${pages[@]}" --locales $LOCALES
+      - name: Add the result to the job summary
+        if: always()
+        run: cat browser-check/summary.md >> "$GITHUB_STEP_SUMMARY" || true
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-check-${{ github.event.pull_request.number || github.run_id }}
+          path: browser-check
+          retention-days: 30

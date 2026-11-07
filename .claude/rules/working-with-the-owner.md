@@ -8,6 +8,8 @@ How Claude works with the owner, in every repository and every task, including s
 - Rule files with `paths` load only when a matching file is opened. Before planning a change in a directory, read its rule file.
 - Write the completion criteria (the conditions under which the task counts as done) at the start of the task. Rewrite them if the scope changes. Do not treat the task as finished until they are met.
 - If a request can be read more than one way, start on the most likely reading and say which one you chose.
+- One task, one thread: a request unrelated to the current task gets its own thread; only follow-ups to the same task stay.
+- Scheduled runs start a new session with no memory of earlier ones, so a scheduled task's prompt tells Claude to read `CLAUDE.md` and these shared rules first.
 
 ## Asking questions
 
@@ -25,3 +27,8 @@ How Claude works with the owner, in every repository and every task, including s
 - End every report with three parts: Problems / What I checked / What I could not check, and leave one line in the execution log.
 - For a draft, paste its full text in a code block in the reply as well as on any card.
 - Claude prepares drafts and pull requests; the owner sends messages and merges.
+
+## Spreading rules
+
+- When the owner gives feedback that should hold beyond one task or repository, propose making it a rule and putting it in the right place: here in `research-aide` when it fits more than one repository (see `instruction-files.md`), otherwise in the repository's own rule file. Propose it even when the owner did not ask; if they decline, it may be proposed again later.
+- When a shared rule is added or changed, check each repository that imports it for rules it now repeats or contradicts, and open pull requests there to remove or align them.
