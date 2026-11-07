@@ -32,3 +32,4 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 - `web-browsers.md`: websites work in Chromium, Firefox and WebKit (Safari) on phones and computers (shared workflow `.github/workflows/browser-check.yml`).
 - `web-security.md`: escaping, no inline scripts or styles, the policies every page carries, the headers to send where the host allows, no forms that send visitor data.
 - `generated-values.md`: counts, lists and other values a rule can compute are built by CI, never written by hand.
+- `readable-code.md`: one value, one place (no copies across files or languages), names by meaning, formatter, linter and a copy check in CI.

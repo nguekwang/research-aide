@@ -15,3 +15,4 @@ Rules for every repository of the owner, from the `research-aide` repository. A 
 @rules/web-browsers.md
 @rules/web-security.md
 @rules/generated-values.md
+@rules/readable-code.md
