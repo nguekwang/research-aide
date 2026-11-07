@@ -22,4 +22,5 @@
 - For a visible change, show before and after screenshots in the pull request.
 - Watch CI on the pull request and fix failures until it passes. Do not skip or weaken a check to make it pass.
 - The owner reviews and merges. Do not merge your own pull request unless the owner has said so for that task.
+- Merge with a merge commit (the owner's choice, 2026-11-06); never squash or rebase when merging.
 - If a new pull request replaces an older one, say in the report that the older one can be closed.
