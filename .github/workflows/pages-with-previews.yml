@@ -1,0 +1,163 @@
+# Shared workflow for website repositories: publish the live site from the default branch plus a
+# preview of every open pull request at /preview/pr-<number>/, and keep one comment on each pull
+# request with links to its preview (each with ?ref=pr-<number>).
+# Rules and the setup for a new repository: .claude/rules/pr-previews.md.
+#
+# GitHub Pages replaces the whole site on every deployment, so every run publishes the live site
+# and all current previews together. Pull request code never runs here: the calling repository's
+# pull request workflow builds and checks the preview and uploads it as the artifact "preview";
+# this workflow only downloads it (from a passing run of a pull request from the same repository,
+# not a fork or Dependabot), adds noindex to every page that lacks it, and unpacks it.
+name: pages-with-previews
+on:
+  workflow_call:
+    inputs:
+      build:
+        description: Shell commands that check and build the live site from the default branch.
+        type: string
+        required: true
+      site-dir:
+        description: Directory the build writes the site into.
+        type: string
+        default: _site
+      preview-workflow:
+        description: File name of the pull request workflow that uploads the artifact "preview".
+        type: string
+        default: site.yml
+      links:
+        description: 'Pages linked in the comment, one "Label|path under the site root" per line.'
+        type: string
+        default: "Top page|"
+      size-limit-mb:
+        description: Previews are added, newest pull request first, only while the site stays under this size (GitHub Pages allows 1 GB).
+        type: number
+        default: 900
+      python-version:
+        type: string
+        default: "3.12"
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Always the default branch, whatever triggered the run.
+          ref: ${{ github.event.repository.default_branch }}
+          # Full history, for sites that date pages from git.
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Build the live site
+        run: ${{ inputs.build }}
+      - id: previews
+        name: Add the latest passing preview of every open pull request
+        uses: actions/github-script@v9
+        env:
+          SITE_DIR: ${{ inputs.site-dir }}
+          PREVIEW_WORKFLOW: ${{ inputs.preview-workflow }}
+          LIMIT_MB: ${{ inputs.size-limit-mb }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const { execFileSync } = require('child_process');
+            const { owner, repo } = context.repo;
+            const site = process.env.SITE_DIR;
+            const limit = Number(process.env.LIMIT_MB) * 1024 * 1024;
+            const size = dir => Number(execFileSync('du', ['-sb', dir]).toString().split('\t')[0]);
+            const noindex = '<meta name="robots" content="noindex">';
+            function markNoindex(dir) {
+              for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+                const p = path.join(dir, e.name);
+                if (e.isDirectory()) markNoindex(p);
+                else if (e.name.endsWith('.html')) {
+                  const html = fs.readFileSync(p, 'utf8');
+                  if (/<meta[^>]+name=["']robots["']/i.test(html)) continue;
+                  fs.writeFileSync(p, html.replace(/<head\b[^>]*>/i, m => `${m}\n${noindex}`));
+                }
+              }
+            }
+            const pulls = (await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', per_page: 100 }))
+              .sort((a, b) => b.number - a.number);
+            const added = [], skipped = [];
+            for (const pr of pulls) {
+              if (!pr.head.repo || pr.head.repo.full_name !== `${owner}/${repo}` || pr.user.login === 'dependabot[bot]') continue;
+              // The newest passing run of the pull request's branch: while a new commit is still
+              // being checked, the preview of the previous commit stays up.
+              const { data: { workflow_runs: runs } } = await github.rest.actions.listWorkflowRuns({
+                owner, repo, workflow_id: process.env.PREVIEW_WORKFLOW, event: 'pull_request', branch: pr.head.ref, status: 'success', per_page: 20 });
+              let artifact = null, run = null;
+              for (const r of runs) {
+                // Branch names can be reused by a later pull request; take only this one's runs.
+                if (!r.pull_requests.some(p => p.number === pr.number) && r.head_sha !== pr.head.sha) continue;
+                const { data } = await github.rest.actions.listWorkflowRunArtifacts({ owner, repo, run_id: r.id, name: 'preview' });
+                artifact = data.artifacts.find(a => !a.expired);
+                if (artifact) { run = r; break; }
+              }
+              if (!artifact) { core.info(`#${pr.number}: no passing preview yet`); continue; }
+              const zip = await github.rest.actions.downloadArtifact({ owner, repo, artifact_id: artifact.id, archive_format: 'zip' });
+              const dir = path.join(site, 'preview', `pr-${pr.number}`);
+              fs.mkdirSync(dir, { recursive: true });
+              fs.writeFileSync('preview.zip', Buffer.from(zip.data));
+              execFileSync('unzip', ['-q', 'preview.zip', '-d', dir]);
+              fs.unlinkSync('preview.zip');
+              if (size(site) > limit) {
+                fs.rmSync(dir, { recursive: true, force: true });
+                core.warning(`#${pr.number}: preview left out, the site would pass ${process.env.LIMIT_MB} MB`);
+                skipped.push({ number: pr.number });
+                continue;
+              }
+              markNoindex(dir);
+              core.info(`#${pr.number}: preview of ${run.head_sha.slice(0, 7)}`);
+              added.push({ number: pr.number, sha: run.head_sha, current: run.head_sha === pr.head.sha });
+            }
+            core.setOutput('added', JSON.stringify(added));
+            core.setOutput('skipped', JSON.stringify(skipped));
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ inputs.site-dir }}
+      - id: deployment
+        uses: actions/deploy-pages@v5
+      - name: Link each preview on its pull request
+        uses: actions/github-script@v9
+        env:
+          ADDED: ${{ steps.previews.outputs.added }}
+          SKIPPED: ${{ steps.previews.outputs.skipped }}
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          LINKS: ${{ inputs.links }}
+          LIMIT_MB: ${{ inputs.size-limit-mb }}
+        with:
+          script: |
+            const marker = '<!-- preview-bot -->';
+            const { owner, repo } = context.repo;
+            const base = process.env.PAGE_URL.replace(/\/?$/, '/');
+            const links = process.env.LINKS.split('\n').map(l => l.trim()).filter(Boolean).map(l => l.split('|'));
+            async function upsert(number, body) {
+              const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: number });
+              const old = comments.find(c => c.body.startsWith(marker));
+              if (old && old.body === body) return;
+              if (old) await github.rest.issues.updateComment({ owner, repo, comment_id: old.id, body });
+              else await github.rest.issues.createComment({ owner, repo, issue_number: number, body });
+            }
+            for (const p of JSON.parse(process.env.ADDED || '[]')) {
+              const root = `${base}preview/pr-${p.number}/`;
+              const ref = `?ref=pr-${p.number}`;
+              await upsert(p.number, [
+                marker,
+                '### Preview',
+                '',
+                `This pull request's version of the site, from commit ${p.sha.slice(0, 7)}${p.current ? '' : ' (the latest commit is still being checked)'}:`,
+                '',
+                ...links.map(([label, page]) => `- ${label}: ${root}${page || ''}${ref}`),
+                '',
+                'Search engines do not index it (noindex), and it is removed when the pull request is closed.',
+              ].join('\n'));
+            }
+            for (const p of JSON.parse(process.env.SKIPPED || '[]')) {
+              await upsert(p.number, [marker, '### Preview', '',
+                `No preview this time: with it the site would pass ${process.env.LIMIT_MB} MB (the GitHub Pages limit is 1 GB). It is added again once older pull requests are closed.`].join('\n'));
+            }

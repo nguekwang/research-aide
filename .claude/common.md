@@ -9,3 +9,4 @@ Rules for every repository of the owner, from the `research-aide` repository. A 
 @rules/publishing.md
 @rules/titles.md
 @rules/profile-links.md
+@rules/pr-previews.md
