@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Shared instructions for every repository of Matsuura Yoshihiro (the owner): the website, research tools and papers. Other repositories import them; this repository holds no code.
+Shared instructions for every repository of Matsuura Yoshihiro (the owner): the website, research tools and papers. Other repositories import them. Apart from shared GitHub Actions workflows (`.github/workflows/`), this repository holds no code.
 
 ## Principles
 
@@ -25,3 +25,4 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 - `publishing.md`: what may be published.
 - `titles.md`: the ` by yoshi` suffix on page titles.
 - `profile-links.md`: the `?ref=` parameter on links to the personal site.
+- `pr-previews.md`: a preview of the site on every pull request in website repositories (shared workflow `.github/workflows/pages-with-previews.yml`).
