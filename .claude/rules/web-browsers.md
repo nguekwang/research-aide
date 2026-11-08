@@ -61,3 +61,4 @@ jobs:
 
 - Sites that pick the interface language from the browser also set `locales` (such as `en-US ja-JP`); each page is then opened once per browser language.
 - List one page of every kind (top page, each kind of sub-page, every interface language, a right-to-left page if the site has them); the check opens each in every engine, at both widths and in both colour schemes.
+- The check's server answers a missing path with the site's `404.html` (status 404), as GitHub Pages does. A page the site serves through `404.html` on purpose (such as a search page at `/q=<terms>`) is listed as `404:/q=<terms>`: it must answer 404, and that answer is not counted as a problem. List the page itself, not a link that redirects to it.
