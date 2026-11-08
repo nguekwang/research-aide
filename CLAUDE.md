@@ -4,6 +4,7 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 
 ## Principles
 
+- **Only what was asked.** Do what the owner asked and nothing else: an explanation stops at the answer, and no text, placeholder or feature goes in that the owner did not ask for.
 - **Security first.** When security and anything else pull apart, security wins; every protection the platform allows is on by default.
 - **One rule, one place.** A rule that applies to more than one repository lives here, not in each repository. A repository keeps only its own rules.
 - **The owner decides and reviews.** Every change, here too, goes through a pull request that the owner merges.
@@ -21,6 +22,7 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 
 - `instruction-files.md`: how CLAUDE.md and rule files are organized.
 - `working-with-the-owner.md`: starting a task, asking questions, reporting.
+- `only-what-was-asked.md`: do only what the owner asked; no unrequested pull requests, text, placeholders or features.
 - `security-first.md`: security comes first in every repository; secrets, Actions permissions, dependencies.
 - `git-and-prs.md`: branches, conflicts, checks, pull requests.
 - `english-first.md`: which language each part of a repository is written in.

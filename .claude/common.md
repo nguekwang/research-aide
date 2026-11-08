@@ -4,6 +4,7 @@ Rules for every repository of the owner, from the `research-aide` repository. A 
 
 @rules/instruction-files.md
 @rules/working-with-the-owner.md
+@rules/only-what-was-asked.md
 @rules/security-first.md
 @rules/git-and-prs.md
 @rules/english-first.md
