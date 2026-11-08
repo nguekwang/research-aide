@@ -35,6 +35,17 @@ on:
       python-version:
         type: string
         default: "3.12"
+      artifact:
+        description: >-
+          Name of an artifact uploaded by an earlier job of the calling run, downloaded before the
+          build (for data a job with fewer permissions fetched, such as a list of releases). Empty
+          for none.
+        type: string
+        default: ""
+      artifact-path:
+        description: Directory the artifact is downloaded into, relative to the repository root.
+        type: string
+        default: _build-input
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -51,6 +62,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ inputs.python-version }}
+      # Data an earlier job of the calling run prepared with a token that can do less than this
+      # job's (this job can deploy and comment). Only the same run's artifacts are read.
+      - if: inputs.artifact != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact }}
+          path: ${{ inputs.artifact-path }}
       - name: Build the live site
         run: ${{ inputs.build }}
       - id: previews
