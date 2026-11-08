@@ -51,3 +51,4 @@ jobs:
 
 - `workflow_run` and `pull_request_target` use the workflow files of the default branch, so previews start once this file is merged.
 - When the shared workflow changes, check that every website repository still deploys.
+- When the build needs data that must be fetched with a token (such as a list of releases from the GitHub API), fetch it in an earlier job of `pages.yml` with only the permissions it needs (`contents: read`), upload it with `actions/upload-artifact`, and pass `artifact: <name>` and `artifact-path: <folder>`; the shared workflow downloads it before the build. Never give the build itself a token: the publishing job can deploy and comment.
