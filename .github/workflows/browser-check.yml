@@ -16,7 +16,7 @@ on:
         type: string
         default: _site
       pages:
-        description: Pages to open, one path under the site root per line, such as "/" for the top page or "/about/".
+        description: Pages to open, one path under the site root per line, such as "/" for the top page or "/about/". Prefix "404:" (such as "404:/q=test") for a page the site serves through its 404.html on purpose.
         type: string
         required: true
       locales:

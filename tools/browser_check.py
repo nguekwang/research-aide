@@ -13,6 +13,12 @@ A page fails if it:
     included),
   - requests a file from the site that does not exist (HTTP 400 or more).
 
+Like GitHub Pages, the local server answers a missing path with the site's own 404.html (status
+404) when the site has one. A page listed as "404:<path>" is one the site serves that way on
+purpose (such as a search page at /q=<terms> that 404.html turns into results): it must answer
+404 with that page, and its own 404 is not counted as a problem; everything else is checked as
+usual.
+
 Requests that leave the local server (measurement and other third parties) get an empty answer,
 so the check never counts as a visit.
 
@@ -22,7 +28,7 @@ Writes to --out:
   summary.md                    the problems found, as a Markdown table
 
 Usage:
-  python3 browser_check.py --site dist --out browser-check --pages "" about/ ja/ [--locales en-US ja-JP]
+  python3 browser_check.py --site dist --out browser-check --pages "" about/ ja/ 404:/q=test [--locales en-US ja-JP]
   (an empty string is the top page). BROWSER_CHECK_CHROMIUM may name a local Chromium binary.
 """
 import argparse, functools, http.server, os, re, sys, threading
@@ -52,9 +58,26 @@ MEASURE = """(width) => {
 
 def serve(directory):
     """Serve `directory` on a free local port in a background thread; return its base URL."""
+    not_found = os.path.join(directory, "404.html")
+
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *args):
             pass
+
+        def send_error(self, code, message=None, explain=None):
+            # GitHub Pages answers a missing path with the site's 404.html, status 404.
+            if code == 404 and os.path.isfile(not_found):
+                with open(not_found, "rb") as f:
+                    body = f.read()
+                self.send_response(404)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                if self.command != "HEAD":
+                    self.wfile.write(body)
+                return
+            super().send_error(code, message, explain)
+
     server = http.server.ThreadingHTTPServer(
         ("127.0.0.1", 0), functools.partial(Quiet, directory=directory))
     threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -68,22 +91,31 @@ def context_options(engine, size, scheme, locale):
     return opts
 
 
-def check_page(context, base, path, shot):
+def check_page(context, base, path, shot, expect_404=False):
+    """Open one page and return its problems. With expect_404 the page is served by the
+    site's 404.html on purpose: it must answer 404, and that answer is not a problem."""
     problems = []
+    url = base + path
     page = context.new_page()
     page.route("**/*", lambda route: route.continue_()
                if route.request.url.startswith(base) else route.fulfill(status=200, body=""))
     page.on("pageerror", lambda e: problems.append(f"JavaScript error: {e}"))
     def on_console(m):
         if m.type == "error":
+            if expect_404 and m.location.get("url") == url and "404" in m.text:
+                return  # the browser's note that the page itself answered 404
             problems.append(f"console error: {m.text}")
     page.on("console", on_console)
     def on_response(r):
-        if r.url.startswith(base) and r.status >= 400:
+        if r.url.startswith(base) and r.status >= 400 and not (expect_404 and r.url == url):
             problems.append(f"HTTP {r.status}: /{r.url[len(base):]}")
     page.on("response", on_response)
-    response = page.goto(base + path, wait_until="load")
-    if response is None or response.status >= 400:
+    response = page.goto(url, wait_until="load")
+    if expect_404:
+        if response is None or response.status != 404:
+            problems.append("expected the site's 404 page (HTTP 404), got "
+                            + ("nothing" if response is None else f"HTTP {response.status}"))
+    elif response is None or response.status >= 400:
         problems.append("page did not load")
     page.wait_for_timeout(500)
     problems += page.evaluate(MEASURE, page.viewport_size["width"])
@@ -119,7 +151,8 @@ def main():
     ap.add_argument("--site", required=True, help="the built site")
     ap.add_argument("--out", default="browser-check")
     ap.add_argument("--pages", nargs="+", required=True,
-                    help='paths under the site root; "" is the top page')
+                    help='paths under the site root; "" is the top page; "404:<path>" for a '
+                         "page the site's 404.html serves on purpose")
     ap.add_argument("--engines", nargs="+", default=ENGINES, choices=ENGINES)
     ap.add_argument("--locales", nargs="+", default=["en-US"],
                     help="browser languages, such as en-US ja-JP")
@@ -127,7 +160,16 @@ def main():
 
     os.makedirs(args.out, exist_ok=True)
     base = serve(args.site)
-    pages = [p.strip().lstrip("/") for p in args.pages]
+    # "404:<path>" marks a page served by the site's 404.html on purpose (see the top).
+    pages, expect_404 = [], set()
+    for p in args.pages:
+        p = p.strip()
+        if p.startswith("404:"):
+            p = p[4:].strip().lstrip("/")
+            expect_404.add(p)
+        else:
+            p = p.lstrip("/")
+        pages.append(p)
     views = [(size, scheme, locale) for locale in args.locales for size in SIZES for scheme in SCHEMES]
     failures = []
 
@@ -141,7 +183,7 @@ def main():
                 context = browser.new_context(**context_options(engine, size, scheme, locale))
                 for path in pages:
                     shot = os.path.join(args.out, f"{engine}-{view_name(path, size, scheme, locale)}.png")
-                    for problem in check_page(context, base, path, shot):
+                    for problem in check_page(context, base, path, shot, path in expect_404):
                         failures.append((engine, f"{size} {scheme} {locale}", "/" + path, problem))
                 context.close()
             browser.close()
