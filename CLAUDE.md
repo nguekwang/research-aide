@@ -8,6 +8,7 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 - **Security first.** When security and anything else pull apart, security wins; every protection the platform allows is on by default.
 - **One rule, one place.** A rule that applies to more than one repository lives here, not in each repository. A repository keeps only its own rules.
 - **The owner decides and reviews.** Every change, here too, goes through a pull request that the owner merges.
+- **No specifications in README.** A `README.md` says only what the repository is and how to build, check and release it. How the product works (specifications, data model, pages, design) goes in `docs/`.
 - **Nothing private.** These files are read in public repositories' sessions; write rules, never private facts.
 
 ## How other repositories use this
