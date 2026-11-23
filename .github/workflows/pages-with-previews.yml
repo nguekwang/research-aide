@@ -31,8 +31,7 @@ on:
       previews:
         description: >-
           Whether to add the previews at /preview/pr-<number>/. Repositories whose previews are on
-          Cloudflare Pages (cloudflare-previews.yml) set false; the GitHub Pages previews are removed
-          once no repository uses them.
+          Cloudflare Pages (cloudflare-previews.yml) set false.
         type: boolean
         default: true
       size-limit-mb:
