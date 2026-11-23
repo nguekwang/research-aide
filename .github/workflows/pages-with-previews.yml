@@ -149,6 +149,30 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: ${{ inputs.site-dir }}
+      # deploy-pages looks up "github-pages" once, right after the upload, and fails when the
+      # list of the run's artifacts has not caught up yet ("No artifacts named github-pages were
+      # found"; seen with "Found 1 artifact(s)" in runs that also uploaded another artifact).
+      # Wait until the list shows it, so the deployment never depends on that timing.
+      - name: Wait until the uploaded site is listed
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const ARTIFACT_NAME = 'github-pages'; // the name upload-pages-artifact uses
+            const WAIT_MS = 5000; // between two looks at the list
+            const TRIES = 24; // 24 looks, 5 s apart: about two minutes in all
+            const { owner, repo } = context.repo;
+            for (let i = 1; i <= TRIES; i++) {
+              // The whole list, without a name filter, as deploy-pages reads it.
+              const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+                owner, repo, run_id: context.runId, per_page: 100 });
+              if (data.artifacts.some(a => a.name === ARTIFACT_NAME)) {
+                core.info(`"${ARTIFACT_NAME}" is listed (look ${i})`);
+                return;
+              }
+              core.info(`"${ARTIFACT_NAME}" is not listed yet (look ${i} of ${TRIES})`);
+              await new Promise(resolve => setTimeout(resolve, WAIT_MS));
+            }
+            core.setFailed(`"${ARTIFACT_NAME}" was not listed after ${TRIES} looks`);
       - id: deployment
         uses: actions/deploy-pages@v5
       - if: inputs.previews
