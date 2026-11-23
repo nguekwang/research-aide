@@ -7,7 +7,7 @@ The owner's rules for every website, under `security-first.md`: no injection, ev
 - Escape all data written into HTML. Never turn off a template engine's autoescape and never mark data as safe to skip escaping; in scripts, set text with `textContent`, not `innerHTML`, unless the HTML is built from escaped parts.
 - No inline scripts and no inline event handlers (`onclick=` and the like); the only inline `<script>` allowed is a JSON-LD data block (`application/ld+json`). No inline `style="..."` attributes or `<style>` elements in pages either; use classes in the site's stylesheet (setting `element.style` from a script is fine). Scripts and styles live in the repository and load from the site itself, never from a CDN.
 - No forms that send visitor input to a server, and no third-party relay services. A search box that only reads the site's own files is fine. Visitors contact the owner by `mailto:` only.
-- No cookies and no `localStorage` for anything but the visitor's own settings (theme, language).
+- No cookies and no `localStorage` for anything but the visitor's own settings (theme, language, consent). The one exception is a measurement service the owner chose that needs a visitor ID (such as Google Analytics): its cookies are set only after the visitor allows them in a consent banner, the site works the same when they decline, the banner can be reopened from every page, and a privacy policy page says what is collected, by whom and for how long. The repository's rule file names the service and where the banner and policy live.
 - Links that open in a new tab carry `rel="noopener noreferrer"`.
 
 ## Policies every page carries
