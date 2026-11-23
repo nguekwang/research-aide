@@ -157,6 +157,14 @@ jobs:
             const { owner, repo } = context.repo;
             const base = process.env.PAGE_URL.replace(/\/?$/, '/');
             const links = process.env.LINKS.split('\n').map(l => l.trim()).filter(Boolean).map(l => l.split('|'));
+            // The pull request's ref goes into the query, before any #fragment, so it is read
+            // as ?ref= (rule: .claude/rules/profile-links.md).
+            function withRef(page, number) {
+              const at = page.indexOf('#');
+              const path = at < 0 ? page : page.slice(0, at);
+              const hash = at < 0 ? '' : page.slice(at);
+              return `${path}${path.includes('?') ? '&' : '?'}ref=pr-${number}${hash}`;
+            }
             async function upsert(number, body) {
               const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: number });
               const old = comments.find(c => c.body.startsWith(marker));
@@ -166,14 +174,13 @@ jobs:
             }
             for (const p of JSON.parse(process.env.ADDED || '[]')) {
               const root = `${base}preview/pr-${p.number}/`;
-              const ref = `?ref=pr-${p.number}`;
               await upsert(p.number, [
                 marker,
                 '### Preview',
                 '',
                 `This pull request's version of the site, from commit ${p.sha.slice(0, 7)}${p.current ? '' : ' (the latest commit is still being checked)'}:`,
                 '',
-                ...links.map(([label, page]) => `- ${label}: ${root}${page || ''}${ref}`),
+                ...links.map(([label, page]) => `- ${label}: ${root}${withRef(page || '', p.number)}`),
                 '',
                 'Search engines do not index it (noindex), and it is removed when the pull request is closed.',
               ].join('\n'));

@@ -2,7 +2,7 @@
 # Chromium, Firefox and WebKit (Safari) at desktop and phone width, in light and dark mode.
 # Fails on sideways scrolling, JavaScript or console errors and missing files.
 # Screenshots (the three engines side by side) are uploaded as an artifact.
-# Rules and the setup for a new repository: .claude/rules/web-browsers.md.
+# Rules: .claude/rules/web-browsers.md; the setup for a new repository: .claude/rules/browser-check.md.
 name: browser-check
 on:
   workflow_call:

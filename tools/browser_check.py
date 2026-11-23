@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Open a built website in Chromium, Firefox and WebKit (Safari) and fail on layout or script errors.
 
-Run by the shared workflow .github/workflows/browser-check.yml; rule: .claude/rules/web-browsers.md.
+Run by the shared workflow .github/workflows/browser-check.yml; rules: .claude/rules/web-browsers.md and browser-check.md.
 
 Serves the built site from a local web server and opens each listed page in each engine at
 desktop width (1280 px) and phone width (390 px, touch), in light and in dark colour scheme,

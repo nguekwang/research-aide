@@ -8,6 +8,7 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 - **Security first.** When security and anything else pull apart, security wins; every protection the platform allows is on by default.
 - **One rule, one place.** A rule that applies to more than one repository lives here, not in each repository. A repository keeps only its own rules.
 - **The owner decides and reviews.** Every change, here too, goes through a pull request that the owner merges.
+- **No specifications in README.** A `README.md` says only what the repository is and how to build, check and release it. How the product works (specifications, data model, pages, design) goes in `docs/`.
 - **Nothing private.** These files are read in public repositories' sessions; write rules, never private facts.
 
 ## How other repositories use this
@@ -31,7 +32,8 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 - `profile-links.md`: the `?ref=` parameter on links to the personal site.
 - `pr-previews.md`: a preview of the site on every pull request in website repositories (shared workflow `.github/workflows/pages-with-previews.yml`).
 - `languages.md`: every language shows the same thing; notation follows each language's official documents.
-- `web-browsers.md`: websites work in Chromium, Firefox and WebKit (Safari) on phones and computers (shared workflow `.github/workflows/browser-check.yml`).
+- `web-browsers.md`: websites work in Chromium, Firefox and WebKit (Safari) on phones and computers.
+- `browser-check.md`: the check every website runs for that in CI, and its setup (shared workflow `.github/workflows/browser-check.yml`).
 - `web-security.md`: escaping, no inline scripts or styles, the policies every page carries, the headers to send where the host allows, no forms that send visitor data.
 - `generated-values.md`: counts, lists and other values a rule can compute are built by CI, never written by hand.
 - `readable-code.md`: one value, one place (no copies across files or languages), names by meaning, formatter, linter and a copy check in CI.
