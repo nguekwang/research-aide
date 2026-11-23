@@ -28,6 +28,13 @@ on:
         description: 'Pages linked in the comment, one "Label|path under the site root" per line.'
         type: string
         default: "Top page|"
+      previews:
+        description: >-
+          Whether to add the previews at /preview/pr-<number>/. Repositories whose previews are on
+          Cloudflare Pages (cloudflare-previews.yml) set false; the GitHub Pages previews are removed
+          once no repository uses them.
+        type: boolean
+        default: true
       size-limit-mb:
         description: Previews are added, newest pull request first, only while the site stays under this size (GitHub Pages allows 1 GB).
         type: number
@@ -72,6 +79,7 @@ jobs:
       - name: Build the live site
         run: ${{ inputs.build }}
       - id: previews
+        if: inputs.previews
         name: Add the latest passing preview of every open pull request
         uses: actions/github-script@v9
         env:
@@ -143,7 +151,8 @@ jobs:
           path: ${{ inputs.site-dir }}
       - id: deployment
         uses: actions/deploy-pages@v5
-      - name: Link each preview on its pull request
+      - if: inputs.previews
+        name: Link each preview on its pull request
         uses: actions/github-script@v9
         env:
           ADDED: ${{ steps.previews.outputs.added }}
