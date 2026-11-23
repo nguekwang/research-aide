@@ -1,6 +1,6 @@
 # Security (website repositories)
 
-The owner's rules for every website, under `security-first.md`: no injection, every security policy the host allows, and nothing collected from visitors beyond the page views and click events the owner chose to measure.
+The owner's rules for every website, under `security-first.md`: no injection, every security policy the host allows, and nothing collected from visitors beyond what the owner chose to measure.
 
 ## Pages and scripts
 
