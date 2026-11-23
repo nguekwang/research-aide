@@ -30,7 +30,7 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 - `publishing.md`: what may be published.
 - `titles.md`: the ` by yoshi` suffix on page titles.
 - `profile-links.md`: the `?ref=` parameter on links to the personal site.
-- `pr-previews.md`: a preview of the site on every pull request in website repositories (shared workflow `.github/workflows/pages-with-previews.yml`).
+- `pr-previews.md`: a preview of the site on every pull request in website repositories, on Cloudflare Pages (shared workflows `.github/workflows/cloudflare-previews.yml` for previews and `.github/workflows/pages-with-previews.yml` for the live site).
 - `languages.md`: every language shows the same thing; notation follows each language's official documents.
 - `web-browsers.md`: websites work in Chromium, Firefox and WebKit (Safari) on phones and computers.
 - `browser-check.md`: the check every website runs for that in CI, and its setup (shared workflow `.github/workflows/browser-check.yml`).

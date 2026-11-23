@@ -1,0 +1,169 @@
+# Shared workflow for website repositories: publish the preview of a pull request on Cloudflare
+# Pages, at https://pr-<number>.<project>.pages.dev/ (the same paths as the live site), keep one
+# comment on the pull request with links to it (each with ?ref=pr-<number>), and delete the
+# preview when the pull request is closed.
+# Rules and the setup for a new repository: .claude/rules/pr-previews.md.
+#
+# Pull request code never runs here and no repository is checked out: the calling repository's
+# pull request workflow builds and checks the preview and uploads it as the artifact "preview";
+# this workflow only downloads it from a passing run of a pull request from the same repository
+# (not a fork or Dependabot) and uploads the files to Cloudflare with wrangler.
+# Cloudflare sends "X-Robots-Tag: noindex" on every preview deployment, so search engines do not
+# index the previews.
+name: cloudflare-previews
+on:
+  workflow_call:
+    inputs:
+      project:
+        description: Name of the Cloudflare Pages project (Direct Upload) that holds the previews.
+        type: string
+        required: true
+      links:
+        description: 'Pages linked in the comment, one "Label|path under the site root" per line.'
+        type: string
+        default: "Top page|"
+    secrets:
+      CLOUDFLARE_API_TOKEN:
+        description: API token with only the permission "Account / Cloudflare Pages / Edit".
+        required: true
+      CLOUDFLARE_ACCOUNT_ID:
+        required: true
+env:
+  # Pinned; update on purpose, after reading its release notes.
+  WRANGLER: wrangler@4.158.0
+  NODE_VERSION: "22"
+jobs:
+  deploy:
+    # A passing run of the pull request workflow, for a pull request from this repository.
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.actor.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    # One upload per pull request at a time, in order, so an older commit never replaces a newer one.
+    concurrency:
+      group: cloudflare-preview-${{ github.event.workflow_run.head_branch }}
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      pull-requests: write
+    steps:
+      - id: pr
+        name: Find the open pull request whose latest commit this run checked
+        uses: actions/github-script@v9
+        env:
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: pulls } = await github.rest.pulls.list({
+              owner, repo, state: 'open', head: `${owner}:${process.env.HEAD_BRANCH}` });
+            // A run of an older commit is skipped: the run of the latest commit uploads the preview.
+            const pr = pulls.find(p => p.head.sha === process.env.HEAD_SHA);
+            if (!pr) { core.info('no open pull request has this commit as its latest; nothing to do'); return; }
+            core.setOutput('number', String(pr.number));
+      - if: steps.pr.outputs.number
+        uses: actions/download-artifact@v4
+        with:
+          name: preview
+          path: _preview
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      # Files that would make Cloudflare run code on its servers (Pages Functions), or change how
+      # the project is set up, must never come from a pull request.
+      - if: steps.pr.outputs.number
+        name: Refuse server code in the preview
+        run: |
+          found=$(find _preview \( -name _worker.js -o -name _routes.json -o -name 'wrangler.*' \) -print -quit)
+          if [ -n "$found" ] || [ -e functions ]; then
+            echo "::error::the preview holds $found; Pages Functions are not allowed in previews"
+            exit 1
+          fi
+      - if: steps.pr.outputs.number
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - if: steps.pr.outputs.number
+        name: Upload the preview to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ inputs.project }}
+          BRANCH: pr-${{ steps.pr.outputs.number }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: >-
+          npx --yes "$WRANGLER" pages deploy _preview
+          --project-name="$PROJECT" --branch="$BRANCH" --commit-hash="$SHA" --commit-dirty=true
+      - if: steps.pr.outputs.number
+        name: Link the preview on the pull request
+        uses: actions/github-script@v9
+        env:
+          NUMBER: ${{ steps.pr.outputs.number }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          PROJECT: ${{ inputs.project }}
+          LINKS: ${{ inputs.links }}
+        with:
+          script: |
+            const marker = '<!-- preview-bot -->';
+            const { owner, repo } = context.repo;
+            const number = Number(process.env.NUMBER);
+            // Cloudflare's branch alias: https://<branch>.<project>.pages.dev/
+            const root = `https://pr-${number}.${process.env.PROJECT}.pages.dev/`;
+            const links = process.env.LINKS.split('\n').map(l => l.trim()).filter(Boolean).map(l => l.split('|'));
+            // The pull request's ref goes into the query, before any #fragment, so it is read
+            // as ?ref= (rule: .claude/rules/profile-links.md).
+            function withRef(page) {
+              const at = page.indexOf('#');
+              const path = at < 0 ? page : page.slice(0, at);
+              const hash = at < 0 ? '' : page.slice(at);
+              return `${path}${path.includes('?') ? '&' : '?'}ref=pr-${number}${hash}`;
+            }
+            const body = [
+              marker,
+              '### Preview',
+              '',
+              `This pull request's version of the site, from commit ${process.env.SHA.slice(0, 7)}:`,
+              '',
+              ...links.map(([label, page]) => `- ${label}: ${root}${withRef(page || '')}`),
+              '',
+              'Search engines do not index it (noindex), and it is removed when the pull request is closed.',
+            ].join('\n');
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: number });
+            const old = comments.find(c => c.body.startsWith(marker));
+            if (old && old.body === body) return;
+            if (old) await github.rest.issues.updateComment({ owner, repo, comment_id: old.id, body });
+            else await github.rest.issues.createComment({ owner, repo, issue_number: number, body });
+  remove:
+    if: github.event_name == 'pull_request_target' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: cloudflare-preview-${{ github.event.pull_request.head.ref }}
+      cancel-in-progress: false
+    permissions: {}
+    steps:
+      - name: Delete every deployment of the pull request's preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROJECT: ${{ inputs.project }}
+          BRANCH: pr-${{ github.event.pull_request.number }}
+        run: |
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/$PROJECT/deployments"
+          auth="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
+          ids="" page=1
+          while :; do
+            list=$(curl -fsS -H "$auth" "$api?env=preview&page=$page")
+            [ "$(jq '.result | length' <<< "$list")" -gt 0 ] || break
+            ids="$ids $(jq -r --arg b "$BRANCH" '.result[] | select(.deployment_trigger.metadata.branch == $b) | .id' <<< "$list")"
+            page=$((page + 1))
+          done
+          ids=$(echo $ids)
+          for id in $ids; do
+            # force: also delete the deployment the branch alias points to.
+            curl -fsS -X DELETE -H "$auth" "$api/$id?force=true" > /dev/null
+            echo "deleted $id"
+          done
+          [ -n "$ids" ] || echo "no deployment for $BRANCH"
