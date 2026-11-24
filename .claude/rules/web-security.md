@@ -1,13 +1,13 @@
 # Security (website repositories)
 
-The owner's rules for every website, under `security-first.md`: no injection, every security policy the host allows, and nothing collected from visitors beyond the page views and click events the owner chose to measure.
+The owner's rules for every website, under `security-first.md`: no injection, every security policy the host allows, and nothing collected from visitors beyond what the owner chose to measure.
 
 ## Pages and scripts
 
 - Escape all data written into HTML. Never turn off a template engine's autoescape and never mark data as safe to skip escaping; in scripts, set text with `textContent`, not `innerHTML`, unless the HTML is built from escaped parts.
 - No inline scripts and no inline event handlers (`onclick=` and the like); the only inline `<script>` allowed is a JSON-LD data block (`application/ld+json`). No inline `style="..."` attributes or `<style>` elements in pages either; use classes in the site's stylesheet (setting `element.style` from a script is fine). Scripts and styles live in the repository and load from the site itself, never from a CDN.
 - No forms that send visitor input to a server, and no third-party relay services. A search box that only reads the site's own files is fine. Visitors contact the owner by `mailto:` only.
-- No cookies and no `localStorage` for anything but the visitor's own settings (theme, language).
+- No cookies and no `localStorage` for anything but the visitor's own settings (theme, language, consent). The one exception is a measurement service the owner chose that needs a visitor ID (such as Google Analytics): its cookies are set only after the visitor allows them in a consent banner, the site works the same when they decline, the banner can be reopened from every page, and a privacy policy page says what is collected, by whom and for how long. The repository's rule file names the service and where the banner and policy live.
 - Links that open in a new tab carry `rel="noopener noreferrer"`.
 
 ## Policies every page carries
@@ -15,7 +15,7 @@ The owner's rules for every website, under `security-first.md`: no injection, ev
 Written once in the site's template or build tool, right after `<meta charset="utf-8">` (a `<meta>` policy covers only what comes after it), and checked on every page in CI. The repository's rule file names where.
 
 - `<meta http-equiv="Content-Security-Policy">` with at least: `default-src 'none'`; `script-src`, `style-src`, `img-src` and `connect-src` listing only `'self'` and the services the site really uses (the measurement service the owner chose, an API a page calls); no `'unsafe-inline'`, `'unsafe-eval'`, `data:` or wildcard unless the rule file says why; `form-action 'none'` (or `'self'` with a search form); `base-uri 'none'`; `object-src 'none'`. Leave out `upgrade-insecure-requests`: with no `http:` source allowed it adds nothing, and WebKit applies it to `http://127.0.0.1`, which breaks the shared browser check. A new source changes the policy in the same pull request.
-- `<meta name="referrer" content="no-referrer">`, or `strict-origin-when-cross-origin` where the measurement the owner chose needs it.
+- `<meta name="referrer" content="no-referrer">`, or `same-origin` where the site's own requests need the page address (nothing still leaves the site), or `strict-origin-when-cross-origin` where the measurement the owner chose needs it.
 - Do not put `frame-ancestors`, `report-uri`, `report-to` or `sandbox` in the `<meta>` policy: browsers ignore them there.
 
 ## Headers, where the host can send them
