@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployed.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -172,15 +172,39 @@ jobs:
               await new Promise(resolve => setTimeout(resolve, WAIT_MS));
             }
             core.setFailed(`"${ARTIFACT_NAME}" was not listed after ${TRIES} looks`);
+      # deploy-pages still fails now and then right after the list shows the site ("Fetching
+      # artifact metadata failed", "No artifacts named github-pages were found"), and re-running
+      # the job cannot help: the re-run uploads a second "github-pages" and deploy-pages refuses
+      # two. It fails before it creates a deployment, so the same upload is simply tried again,
+      # after a pause, up to three times in all; only the last try fails the job.
       - id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v5
+      - if: steps.deployment.outcome == 'failure'
+        name: Wait before the second try
+        run: sleep 60 # seconds
+      - id: deployment-2
+        if: steps.deployment.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+      - if: steps.deployment-2.outcome == 'failure'
+        name: Wait before the last try
+        run: sleep 180 # seconds
+      - id: deployment-3
+        if: steps.deployment-2.outcome == 'failure'
+        uses: actions/deploy-pages@v5
+      # The address of the site, from whichever try deployed it.
+      - id: deployed
+        env:
+          URL: ${{ steps.deployment.outputs.page_url || steps.deployment-2.outputs.page_url || steps.deployment-3.outputs.page_url }}
+        run: echo "page_url=$URL" >> "$GITHUB_OUTPUT"
       - if: inputs.previews
         name: Link each preview on its pull request
         uses: actions/github-script@v9
         env:
           ADDED: ${{ steps.previews.outputs.added }}
           SKIPPED: ${{ steps.previews.outputs.skipped }}
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          PAGE_URL: ${{ steps.deployed.outputs.page_url }}
           LINKS: ${{ inputs.links }}
           LIMIT_MB: ${{ inputs.size-limit-mb }}
         with:
