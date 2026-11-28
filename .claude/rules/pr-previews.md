@@ -1,8 +1,8 @@
 # Pull request previews (website repositories)
 
-The owner's rule (2026-11-07): every pull request in a repository that publishes a website gets a preview of the site, linked on the pull request. Repositories without a website (command-line tools, libraries, papers) do not.
+The owner's rule: every pull request in a repository that publishes a website gets a preview of the site, linked on the pull request. Repositories without a website (command-line tools, libraries, papers) do not.
 
-The owner's decision (2026-11-23): Lang Log's previews have no `preview` path. They are on Cloudflare Pages, at the same paths as the live site, and a visit is told apart by its query (`?ref=pr-<number>`) and its host. The live sites stay on GitHub Pages. The personal site (nguekwang.github.io) stays wholly on GitHub Pages, previews included, at `/preview/pr-<number>/` (see "Previews on GitHub Pages" below).
+The owner's decision: Lang Log's previews have no `preview` path. They are on Cloudflare Pages, at the same paths as the live site, and a visit is told apart by its query (`?ref=pr-<number>`) and its host. The live sites stay on GitHub Pages. The personal site (nguekwang.github.io) stays wholly on GitHub Pages, previews included, at `/preview/pr-<number>/` (see "Previews on GitHub Pages" below).
 
 Which of the two a repository uses is the owner's choice; record it in the repository's own rule file.
 

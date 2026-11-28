@@ -1,6 +1,6 @@
 # Security first
 
-The owner's rule for every repository and every task (2026-11-07): security comes first.
+The owner's rule for every repository and every task: security comes first.
 
 - When security and something else pull apart (convenience, speed, looks, less work), choose security. When unsure whether something is safe enough, take the safer option and tell the owner what it costs.
 - Turn on every protection the platform allows, by default, in new work and whenever existing work is touched. Leaving one off needs a reason written in the repository's rule file (for example "GitHub Pages cannot send headers").

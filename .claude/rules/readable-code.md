@@ -1,6 +1,6 @@
 # Readable code
 
-The owner's rule (2026-11-07), for every repository and every language (Python, JavaScript, CSS, HTML, shell, Typst): code must read clearly, and one value must never be defined twice. Two copies drift apart, and then two parts of the program follow different values (the case that started this rule: a Lang Log animation length written once in CSS and again in JavaScript).
+The owner's rule, for every repository and every language (Python, JavaScript, CSS, HTML, shell, Typst): code must read clearly, and one value must never be defined twice. Two copies drift apart, and then two parts of the program follow different values.
 
 ## One value, one place
 
