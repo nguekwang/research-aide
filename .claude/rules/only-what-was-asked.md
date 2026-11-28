@@ -1,6 +1,6 @@
 # Only what was asked
 
-The owner's rule (2026-11-08), for every repository, every task and every scheduled run: do what the owner asked, and nothing else. It started when unrequested text appeared on the Lang Log top page (an English description shown in the Japanese interface, and a "coming soon" placeholder), and when two pull requests were opened for questions that only asked for an explanation.
+The owner's rule, for every repository, every task and every scheduled run: do what the owner asked, and nothing else.
 
 ## Scope
 

@@ -1,6 +1,6 @@
 # Values computed by CI
 
-The owner's rule (2026-11-07), for every repository: anything that a rule can compute from data the repository already has is computed by a script in CI, never written by hand and never written out by an AI.
+The owner's rule, for every repository: anything that a rule can compute from data the repository already has is computed by a script in CI, never written by hand and never written out by an AI.
 
 ## What counts
 

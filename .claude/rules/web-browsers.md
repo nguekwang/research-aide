@@ -1,6 +1,6 @@
 # Browsers (website repositories)
 
-The owner's rule (2026-11-07): every website of the owner (the personal site, Lang Log and any later one) looks and works the same in every current browser, on phones and on computers. Internet Explorer is not supported.
+The owner's rule: every website of the owner (the personal site, Lang Log and any later one) looks and works the same in every current browser, on phones and on computers. Internet Explorer is not supported.
 
 ## Which browsers
 
