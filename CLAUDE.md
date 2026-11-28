@@ -38,3 +38,7 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 - `generated-values.md`: counts, lists and other values a rule can compute are built by CI, never written by hand.
 - `readable-code.md`: one value, one place (no copies across files or languages), names by meaning, formatter, linter and a copy check in CI.
 - `simple-structure.md`: keep every repository's structure as simple and loosely coupled as possible; parts depend on each other only through what they publish.
+
+Shared skills, in `.claude/skills/` (each repository that uses one names its path in its own `CLAUDE.md`):
+
+- `i18n/`: adding, changing or removing page or interface text in every language of a site.

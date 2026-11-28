@@ -11,6 +11,7 @@ Rules for the files Claude reads as instructions: `CLAUDE.md` and everything in 
   Keep `SKILL.md` short, because it is loaded whole every time the skill runs: when to use it, the steps that must always be followed, and which file under `references/` to read at which step. Move details, examples and rules for only some cases into `references/<topic>.md`, without changing their wording (the owner's rule, 2026-11-24).
 - Values a program reads (settings, lists, numbers) go in data or config files, not in prose. A rule file may point to them.
 - A rule that applies to more than one repository goes in the shared `research-aide` repository, not in each repository. Each repository's `CLAUDE.md` imports it with `@../research-aide/.claude/common.md` (start from `templates/CLAUDE.md`). Claude Code skips an import from outside the repository until it is approved, so the same `CLAUDE.md` also tells Claude to read the shared files itself when they are missing from its context.
+- A procedure that more than one repository follows goes in `research-aide/.claude/skills/<name>/`, laid out like any skill. Claude Code loads skills only from the repository it runs in, so each repository that uses a shared skill names it in its `CLAUDE.md` map by path (`../research-aide/.claude/skills/<name>/SKILL.md`), and Claude reads that file before the task.
 
 ## Path-scoped rules
 
