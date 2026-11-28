@@ -33,6 +33,7 @@ Shared instructions for every repository of Matsuura Yoshihiro (the owner): the 
 - `pr-previews.md`: a preview of the site on every pull request in website repositories, on Cloudflare Pages (`.github/workflows/cloudflare-previews.yml`) or on GitHub Pages under `/preview/` (`.github/workflows/pages-with-previews.yml`, which also publishes the live site).
 - `languages.md`: every language shows the same thing; notation follows each language's official documents.
 - `web-browsers.md`: websites work in Chromium, Firefox and WebKit (Safari) on phones and computers.
+- `no-guide.md`: every feature of a site or tool can be used from the first visit, without a guide, tour or help text.
 - `browser-check.md`: the check every website runs for that in CI, and its setup (shared workflow `.github/workflows/browser-check.yml`).
 - `web-security.md`: escaping, no inline scripts or styles, the policies every page carries, the headers to send where the host allows, no forms that send visitor data.
 - `generated-values.md`: counts, lists and other values a rule can compute are built by CI, never written by hand.
